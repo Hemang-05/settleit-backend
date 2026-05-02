@@ -1,9 +1,11 @@
 import random
 
 FORMAT_CONFIG = {
+    "test": {"total_overs": 450, "pp_overs": 0, "label": "Test", "par_score": "300-400"},
     "odi": {"total_overs": 50, "pp_overs": 10, "label": "ODI", "par_score": "250-320"},
     "t20": {"total_overs": 20, "pp_overs": 6, "label": "T20", "par_score": "160-190"},
     "t10": {"total_overs": 10, "pp_overs": 3, "label": "T10", "par_score": "90-120"},
+    "superover": {"total_overs": 1, "pp_overs": 0, "label": "Super Over", "par_score": "12-20"},
 }
 
 def format_team(team, tactics):
