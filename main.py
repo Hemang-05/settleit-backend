@@ -16,4 +16,4 @@ app.include_router(simulation.router, prefix="/api/simulation")
 
 @app.get("/")
 def root():
-    return {"status": "SquadClash API running 🚀"}
+    return {"status": "Settle it API running 🚀"}
