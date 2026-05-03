@@ -117,12 +117,78 @@ Generate the FULL innings scorecard and bowling figures. Determine the match res
 Include 10-15 commentary events. If tied, set "match_tied": true."""
 
     elif phase == "super_over":
-        phase_instruction = f"""Simulate a SUPER OVER (1 over per side). Both teams bat and bowl 1 over each.
-Team A selected batters: {', '.join([p['name'] for p in match_state.get('so_batters_a', [])])}
-Team A bowler: {match_state.get('so_bowler_a', {}).get('name', 'Unknown')}
-Team B selected batters: {', '.join([p['name'] for p in match_state.get('so_batters_b', [])])}
-Team B bowler: {match_state.get('so_bowler_b', {}).get('name', 'Unknown')}
-Generate commentary for both super over innings and determine the winner."""
+        so_batters_a = match_state.get('so_batters_a', [])
+        so_bowler_a = match_state.get('so_bowler_a', {})
+        so_batters_b = match_state.get('so_batters_b', [])
+        so_bowler_b = match_state.get('so_bowler_b', {})
+
+        prompt = f"""You are a world-class cricket analyst simulating a SUPER OVER.
+
+{context}
+
+SUPER OVER RULES (STRICTLY FOLLOW):
+- Each team bats EXACTLY 1 over (MAXIMUM 6 balls per side).
+- Each team has ONLY 3 batters. If 2 wickets fall, the batting side is ALL OUT (only 3 batters means 2 wickets = all out).
+- Each team has ONLY 1 bowler who bowls the entire over.
+- Team A bats first, Team B chases.
+- No batter can face more than 6 balls total across the innings.
+- Total balls faced by all batters MUST equal the overs bowled × 6 (e.g., 1.0 over = 6 balls, 0.4 overs = 4 balls).
+
+TEAM A BATTING (bowled by {so_bowler_b.get('name', 'Unknown')}):
+  Batters: {', '.join([p['name'] for p in so_batters_a])}
+  Bowler (for Team B's innings): {so_bowler_a.get('name', 'Unknown')}
+
+TEAM B BATTING (bowled by {so_bowler_a.get('name', 'Unknown')}):
+  Batters: {', '.join([p['name'] for p in so_batters_b])}
+  Bowler (for Team A's innings): {so_bowler_b.get('name', 'Unknown')}
+
+Simulate both super over innings. Generate ball-by-ball commentary for ALL deliveries (6-12 events total across both innings).
+
+RESPOND IN THIS EXACT JSON FORMAT:
+{{
+  "so_innings_a": {{
+    "runs": 0, "wickets": 0, "overs": 1.0,
+    "scorecard": [
+      {{"name": "batter name", "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "out": "how out or not out"}}
+    ],
+    "bowler": {{"name": "bowler name", "overs": 1.0, "runs": 0, "wickets": 0}}
+  }},
+  "so_innings_b": {{
+    "runs": 0, "wickets": 0, "overs": 1.0,
+    "scorecard": [
+      {{"name": "batter name", "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "out": "how out or not out"}}
+    ],
+    "bowler": {{"name": "bowler name", "overs": 1.0, "runs": 0, "wickets": 0}}
+  }},
+  "commentary_events": [
+    {{"over": "SO1 0.1", "type": "six", "text": "SIX! Description..."}},
+    {{"over": "SO1 0.4", "type": "wicket", "text": "WICKET! Description..."}},
+    {{"over": "SO1 1.0", "type": "phase_end", "text": "Team A finish on X/Y from 1 over"}},
+    {{"over": "SO2 0.1", "type": "boundary", "text": "FOUR! Description..."}},
+    {{"over": "SO2 0.5", "type": "dramatic", "text": "Chase description..."}},
+    {{"over": "SO2 1.0", "type": "phase_end", "text": "Team B finish on X/Y. Result!"}}
+  ],
+  "match_result": {{
+    "winner": "Team A or Team B",
+    "margin": "e.g. 5 runs or 1 wicket",
+    "player_of_match": "player name",
+    "player_of_match_reason": "why",
+    "summary": "2-3 sentence dramatic super over summary"
+  }},
+  "phase_summary": "Brief summary"
+}}
+
+IMPORTANT CONSTRAINTS:
+- ONLY use the 3 selected batters per team. Do NOT add any other batters.
+- Each scorecard must have ONLY 2-3 entries (the selected batters).
+- Total balls across all batters in one innings MUST NOT exceed 6.
+- Overs must be max 1.0 (written as 1.0, not 1). If all out in 0.4, write 0.4.
+- Make it dramatic! Super overs are high-pressure cricket.
+- EVENT TYPES: boundary, six, wicket, phase_end, normal, dramatic
+Respond with ONLY the JSON, no extra text."""
+
+        return prompt
+
     else:
         phase_instruction = "Simulate the match."
 
@@ -153,7 +219,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
 
 EVENT TYPES: boundary, six, wicket, milestone, phase_end, normal, dramatic
 Include 8-15 events. Make wickets dramatic. Include milestones (50s, 100s).
-{"Add match_result: {winner, margin, player_of_match, player_of_match_reason, summary} if this is the final phase." if phase in ("inn2_mid", "super_over") else ""}
+{"Add match_result: {winner, margin, player_of_match, player_of_match_reason, summary} if this is the final phase." if phase == "inn2_mid" else ""}
 Respond with ONLY the JSON, no extra text."""
 
     return prompt
